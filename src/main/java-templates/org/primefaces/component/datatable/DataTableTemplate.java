@@ -7,11 +7,11 @@ import org.primefaces.component.subtable.SubTable;
 import org.primefaces.component.contextmenu.ContextMenu;
 import org.primefaces.component.summaryrow.SummaryRow;
 import org.primefaces.context.RequestContext;
+import org.primefaces.util.Constants;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +22,7 @@ import javax.faces.application.NavigationHandler;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import org.primefaces.model.LazyDataModel;
 import java.lang.StringBuilder;
 import java.util.List;
@@ -123,6 +124,12 @@ import org.primefaces.util.SharedStringBuilder;
     public static final String EDITING_ROW_CLASS = "ui-row-editing";
     public static final String STICKY_HEADER_CLASS = "ui-datatable-sticky";
     
+    public static final String ARIA_FILTER_BY = "primefaces.datatable.aria.FILTER_BY";
+    public static final String ARIA_HEADER_CHECKBOX_ALL = "primefaces.datatable.aria.HEADER_CHECKBOX_ALL";
+    public static final String SORT_LABEL = "primefaces.datatable.SORT_LABEL";
+    public static final String SORT_ASC = "primefaces.datatable.SORT_ASC";
+    public static final String SORT_DESC = "primefaces.datatable.SORT_DESC";
+    
     public static final String MOBILE_CONTAINER_CLASS = "ui-datatable ui-shadow";
     public static final String MOBILE_TABLE_CLASS = "ui-responsive ui-table table-stripe";
     public static final String MOBILE_COLUMN_HEADER_CLASS = "ui-column-header";
@@ -154,6 +161,7 @@ import org.primefaces.util.SharedStringBuilder;
         FEATURES.put(DataTableFeatureKey.ROW_EXPAND, new RowExpandFeature());
         FEATURES.put(DataTableFeatureKey.SCROLL, new ScrollFeature());
         FEATURES.put(DataTableFeatureKey.DRAGGABLE_ROWS, new DraggableRowsFeature());
+        FEATURES.put(DataTableFeatureKey.ADD_ROW, new AddRowFeature());
     }
     
     public DataTableFeature getFeature(DataTableFeatureKey key) {
@@ -468,24 +476,39 @@ import org.primefaces.util.SharedStringBuilder;
         
         if(model != null && model instanceof LazyDataModel) {            
             LazyDataModel lazyModel = (LazyDataModel) model;
-            
             List<?> data = null;
+            boolean lazyCache = this.isLazyCache();
             
-			// #7176
-			calculateFirst();
-			
-            if(this.isMultiSort()) {
-                data = lazyModel.load(getFirst(), getRows(), getMultiSortMeta(), getFilters());
+            //#7176
+            calculateFirst();
+
+            int first = this.getFirst();
+
+            //try to load from cache
+            if(lazyCache) {
+                Map<String,List> lazyCacheData = this.getLazyCacheData();
+                if(lazyCacheData != null) {
+                    data = lazyCacheData.get(String.valueOf(first));
+                }
             }
-            else {
-                data = lazyModel.load(getFirst(), getRows(),  resolveSortField(), convertSortOrder(), getFilters());
+            
+            if(data == null) {
+                if(this.isMultiSort())
+                    data = lazyModel.load(first, getRows(), getMultiSortMeta(), getFilters());
+                else
+                    data = lazyModel.load(first, getRows(),  resolveSortField(), convertSortOrder(), getFilters());
+            
+                //save in cache
+                if(lazyCache) {
+                    this.insertIntoLazyCache(first, data);
+                }
             }
             
             lazyModel.setPageSize(getRows());
             lazyModel.setWrappedData(data);
 
-            //Update paginator for callback
-            if(this.isPaginator()) {
+            //Update paginator/livescroller for callback
+            if(this.isPaginator()||this.isLiveScroll()) {
                 RequestContext requestContext = RequestContext.getCurrentInstance();
 
                 if(requestContext != null) {
@@ -494,8 +517,30 @@ import org.primefaces.util.SharedStringBuilder;
             }
         }
     }
+
+    public void loadLazyDataToCache(int offset) {
+        DataModel model = getDataModel();
+        
+        if(model != null && model instanceof LazyDataModel) {            
+            LazyDataModel lazyModel = (LazyDataModel) model;
+            List<?> data = null;
+            Map<String,List> lazyCacheData = this.getLazyCacheData();
+            if(lazyCacheData != null) {
+                data = lazyCacheData.get(String.valueOf(offset));
+            }
+			
+            if(data == null) {
+                if(this.isMultiSort())
+                    data = lazyModel.load(offset, getRows(), getMultiSortMeta(), getFilters());
+                else
+                    data = lazyModel.load(offset, getRows(),  resolveSortField(), convertSortOrder(), getFilters());
+
+                this.insertIntoLazyCache(offset, data);
+            }
+        }
+    }
     
-     public void loadLazyScrollData(int offset, int rows) {
+    public void loadLazyScrollData(int offset, int rows) {
         DataModel model = getDataModel();
         
         if(model != null && model instanceof LazyDataModel) {            
@@ -513,8 +558,8 @@ import org.primefaces.util.SharedStringBuilder;
             lazyModel.setPageSize(rows);
             lazyModel.setWrappedData(data);
 
-            //Update paginator for callback
-            if(this.isPaginator()) {
+            //Update paginator/livescroller  for callback
+            if(this.isPaginator()||this.isLiveScroll()) {
                 RequestContext requestContext = RequestContext.getCurrentInstance();
 
                 if(requestContext != null) {
@@ -838,7 +883,9 @@ import org.primefaces.util.SharedStringBuilder;
                         }
                     }
                     else if(kid instanceof Column) {
-                        columnsCount++;
+                        if(((UIColumn)kid).isVisible()) {
+                            columnsCount++;
+                        }
                     } 
                     else if(kid instanceof SubTable) {
                         SubTable subTable = (SubTable) kid;
@@ -929,7 +976,12 @@ import org.primefaces.util.SharedStringBuilder;
     
     @Override
     protected boolean shouldSkipChildren(FacesContext context) {
-        return this.isSkipChildren() || context.getExternalContext().getRequestParameterMap().containsKey(this.getClientId(context) + "_skipChildren");
+        Map<String,String> params =  context.getExternalContext().getRequestParameterMap();
+        String paramValue = params.get(Constants.RequestParams.SKIP_CHILDREN_PARAM);
+        if(paramValue != null && Boolean.valueOf(paramValue) == false)
+            return false;
+        else
+            return (this.isSkipChildren() || params.containsKey(this.getClientId(context) + "_skipChildren"));
     }
     
     private UIColumn sortColumn;
@@ -1232,6 +1284,46 @@ import org.primefaces.util.SharedStringBuilder;
             this.setColumns(null);
         }
     }
+
+    public void setLazyCacheData(Map<String,List> data) {
+        List<String> keys = new ArrayList<String>();
+        List<List<?>> values = new ArrayList<List<?>>();
+        for (Map.Entry<String, List> entry : data.entrySet()) {
+            keys.add(entry.getKey());
+            values.add(entry.getValue());        
+        }
         
+        getStateHelper().put("lazyCacheDataKeys", keys);
+        getStateHelper().put("lazyCacheDataValues", values);
+    }
+    
+    public Map<String,List> getLazyCacheData() {
+        List<String> keys = (List<String>) getStateHelper().get("lazyCacheDataKeys");
+        List<List<?>> values = (List<List<?>>) getStateHelper().get("lazyCacheDataValues");
+        
+        if(keys != null) {
+            Map<String,List> map = new LinkedHashMap<String, List>();
+            for (int i = 0; i < keys.size(); i++) {
+                map.put(keys.get(i), values.get(i));
+            }
+            return map;
+        }
+        else {
+            return null;
+        }
+    }
+
+    private void insertIntoLazyCache(int offset, List<?> data) {
+        Map<String,List> lazyCacheData = this.getLazyCacheData();
+        if(lazyCacheData == null) {
+            lazyCacheData = new LinkedHashMap<String,List>();
+        }
+        else if(this.getLazyCacheSize() == lazyCacheData.size()) {
+            //remove first-in to make room
+            lazyCacheData.remove(lazyCacheData.keySet().iterator().next());
+        }
+        lazyCacheData.put(String.valueOf(offset), data);
+        this.setLazyCacheData(lazyCacheData);
+    }       
     
    

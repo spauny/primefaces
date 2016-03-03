@@ -62,9 +62,14 @@ public class CommandButtonRenderer extends CoreRenderer {
         boolean pushButton = (type.equals("reset")||type.equals("button"));
         Object value = button.getValue();
         String icon = button.resolveIcon();
-        String request = pushButton ? null: buildRequest(context, button, clientId);        
-        String onclick = buildDomEvent(context, button, "onclick", "click", "action", request);
+        String title = button.getTitle();
+        String onclick = null;
         
+        if (!button.isDisabled()) {
+            String request = pushButton ? null : buildRequest(context, button, clientId);        
+            onclick = buildDomEvent(context, button, "onclick", "click", "action", request);
+        }
+
 		writer.startElement("button", button);
 		writer.writeAttribute("id", clientId, "id");
 		writer.writeAttribute("name", clientId, "name");
@@ -82,10 +87,9 @@ public class CommandButtonRenderer extends CoreRenderer {
 		renderPassThruAttributes(context, button, HTML.BUTTON_ATTRS, HTML.CLICK_EVENT);
 
         if(button.isDisabled()) writer.writeAttribute("disabled", "disabled", "disabled");
-        if(button.isReadonly()) writer.writeAttribute("readonly", "readonly", "readonly");
-		
+        
         //icon
-        if(icon != null && !icon.trim().equals("")) {
+        if(!isValueBlank(icon)) {
             String defaultIconClass = button.getIconPos().equals("left") ? HTML.BUTTON_LEFT_ICON_CLASS : HTML.BUTTON_RIGHT_ICON_CLASS; 
             String iconClass = defaultIconClass + " " + icon;
             
@@ -99,7 +103,10 @@ public class CommandButtonRenderer extends CoreRenderer {
         writer.writeAttribute("class", HTML.BUTTON_TEXT_CLASS, null);
         
         if(value == null) {
-            writer.write("ui-button");
+            //For ScreenReader
+            String text = (title != null) ? title: "ui-button";
+            
+            writer.write(text);
         }
         else {
             if(button.isEscape())

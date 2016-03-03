@@ -226,10 +226,10 @@
 
         changeTheme: function(newTheme) {
             if(newTheme && newTheme !== '') {
-                var themeLink = $('link[href*="javax.faces.resource/theme.css"]');
+                var themeLink = $('link[href*="' + PrimeFaces.RESOURCE_IDENTIFIER + '/theme.css"]');
                 // portlet
                 if (themeLink.length === 0) {
-                    themeLink = $('link[href*="javax.faces.resource=theme.css"]');
+                    themeLink = $('link[href*="' + PrimeFaces.RESOURCE_IDENTIFIER + '=theme.css"]');
                 }
 
                 var themeURL = themeLink.attr('href'),
@@ -284,38 +284,38 @@
         },
 
         cw : function(widgetConstructor, widgetVar, cfg, resource) {
-            PrimeFaces.createWidget(widgetConstructor, widgetVar, cfg, resource);
+            this.createWidget(widgetConstructor, widgetVar, cfg, resource);
         },
 
         createWidget : function(widgetConstructor, widgetVar, cfg, resource) {
             cfg.widgetVar = widgetVar;
 
-            if(PrimeFaces.widget[widgetConstructor]) {
-                var widget = PrimeFaces.widgets[widgetVar];
+            if(this.widget[widgetConstructor]) {
+                var widget = this.widgets[widgetVar];
 
                 //ajax update
-                if(widget && (widget.constructor === PrimeFaces.widget[widgetConstructor])) {
+                if(widget && (widget.constructor === this.widget[widgetConstructor])) {
                     widget.refresh(cfg);
                 }
                 //page init
                 else {
-                    PrimeFaces.widgets[widgetVar] = new PrimeFaces.widget[widgetConstructor](cfg);
-                    if(PrimeFaces.settings.legacyWidgetNamespace) {
-                        window[widgetVar] = PrimeFaces.widgets[widgetVar];
+                    this.widgets[widgetVar] = new this.widget[widgetConstructor](cfg);
+                    if(this.settings.legacyWidgetNamespace) {
+                        window[widgetVar] = this.widgets[widgetVar];
                     }
                 }
             }
             // widget script not loaded -> lazy load script + stylesheet
             else {
-                var scriptURI = PrimeFaces.getFacesResource(resource + '/' + resource + '.js', 'primefaces');
-                var cssURI = PrimeFaces.getFacesResource(resource + '/' + resource + '.css', 'primefaces');
+                var scriptURI = this.getFacesResource(resource + '/' + resource + '.js', 'primefaces');
+                var cssURI = this.getFacesResource(resource + '/' + resource + '.css', 'primefaces');
 
                 //load css
                 var cssResource = '<link type="text/css" rel="stylesheet" href="' + cssURI + '" />';
                 $('head').append(cssResource);
 
                 //load script and initialize widget
-                PrimeFaces.getScript(scriptURI, function() {
+                this.getScript(scriptURI, function() {
                     setTimeout(function() {
                         PrimeFaces.widgets[widgetVar] = new PrimeFaces.widget[widgetConstructor](cfg);
                     }, 100);
@@ -332,10 +332,17 @@
          * @returns {string} The resource URL.
          */
         getFacesResource : function(name, library, version) {
-            var scriptURI = $('script[src*="/javax.faces.resource/' + PrimeFaces.getCoreScriptName() + '"]').attr('src');
+            
+            // just get sure - name shoudln't start with a slash
+            if (name.indexOf('/') === 0)
+            {
+                name = name.substring(1, name.length);
+            }
+            
+            var scriptURI = $('script[src*="/' + PrimeFaces.RESOURCE_IDENTIFIER + '/' + PrimeFaces.getCoreScriptName() + '"]').attr('src');
             // portlet
             if (!scriptURI) {
-                scriptURI = $('script[src*="javax.faces.resource=' + PrimeFaces.getCoreScriptName() + '"]').attr('src');
+                scriptURI = $('script[src*="' + PrimeFaces.RESOURCE_IDENTIFIER + '=' + PrimeFaces.getCoreScriptName() + '"]').attr('src');
             }
 
             scriptURI = scriptURI.replace(PrimeFaces.getCoreScriptName(), name);
@@ -378,7 +385,7 @@
             });
         },
 
-        focus : function(id, context) {
+        focus: function(id, context) {
             var selector = ':not(:submit):not(:button):input:visible:enabled[name]';
 
             setTimeout(function() {
@@ -396,9 +403,20 @@
                     $(PrimeFaces.escapeClientId(context)).find(selector).eq(0).focus();
                 }
                 else {
-                    $(selector).eq(0).focus();
+                    var elements = $(selector),
+                    firstElement = elements.eq(0);
+                    if(firstElement.is(':radio')) {
+                        var checkedRadio = $(':radio[name="' + firstElement.attr('name') + '"]').filter(':checked');
+                        if(checkedRadio.length)
+                            checkedRadio.focus();
+                        else
+                            firstElement.focus();
+                    }
+                    else {
+                        firstElement.focus();
+                    }
                 }
-            }, 250);
+            }, 50);
 
             // remember that a custom focus has been rendered
             // this avoids to retain the last focus after ajax update
@@ -566,6 +584,27 @@
             }
         },
 
+        getLocaleSettings: function() {
+            if(!this.localeSettings) {
+                var localeKey = PrimeFaces.settings.locale;
+                this.localeSettings = PrimeFaces.locales[localeKey];
+
+                if(!this.localeSettings) {
+                    this.localeSettings = PrimeFaces.locales[localeKey.split('_')[0]];
+
+                    if(!this.localeSettings)
+                        this.localeSettings = PrimeFaces.locales['en_US'];
+                }
+            }
+
+            return this.localeSettings;
+        },
+        
+        getAriaLabel: function(key) {
+            var ariaLocaleSettings = this.getLocaleSettings()['aria'];
+            return (ariaLocaleSettings&&ariaLocaleSettings[key]) ? ariaLocaleSettings[key] : PrimeFaces.locales['en_US']['aria'][key];
+        },
+        
         zindex : 1000,
 
         customFocus : false,
@@ -587,6 +626,8 @@
         RESET_VALUES_PARAM : "primefaces.resetvalues",
 
         IGNORE_AUTO_UPDATE_PARAM : "primefaces.ignoreautoupdate",
+        
+        SKIP_CHILDREN_PARAM : "primefaces.skipchildren",
 
         VIEW_STATE : "javax.faces.ViewState",
 
@@ -594,7 +635,9 @@
 
         VIEW_ROOT : "javax.faces.ViewRoot",
 
-        CLIENT_ID_DATA : "primefaces.clientid"
+        CLIENT_ID_DATA : "primefaces.clientid",
+
+        RESOURCE_IDENTIFIER: 'javax.faces.resource'
     };
 
     /**
@@ -633,10 +676,19 @@
             month: 'Month',
             week: 'week',
             day: 'Day',
-            allDayText: 'All Day'
+            allDayText: 'All Day',
+            aria: {
+                'paginator.PAGE': 'Page {0}',
+                'calendar.BUTTON': 'Show Calendar',
+                'datatable.sort.ASC': 'activate to sort column ascending',
+                'datatable.sort.DESC': 'activate to sort column descending',
+                'columntoggler.CLOSE': 'Close'
+            }
         }
 
     };
+    
+    PrimeFaces.locales['en'] = PrimeFaces.locales['en_US'];
 
     PF = function(widgetVar) {
     	var widgetInstance = PrimeFaces.widgets[widgetVar];

@@ -40,10 +40,6 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
             this.setupResizable();
         }
 
-        if(this.cfg.modal) {
-            this.syncWindowResize();
-        }
-
         if(this.cfg.appendTo) {
         	this.jq.appendTo(PrimeFaces.expressions.SearchExpressionFacade.resolveComponentsAsSelector(this.cfg.appendTo));
         }
@@ -115,12 +111,8 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
         var $this = this,
         doc = $(document);
 
-        $(document.body).append('<div id="' + this.id + '_modal" class="ui-widget-overlay"></div>')
-                        .children(this.jqId + '_modal').css({
-                            'width' : doc.width(),
-                            'height' : doc.height(),
-                            'z-index' : this.jq.css('z-index') - 1
-                        });
+        $(document.body).append('<div id="' + this.id + '_modal" class="ui-widget-overlay ui-dialog-mask"></div>')
+                        .children(this.jqId + '_modal').css('z-index' , this.jq.css('z-index') - 1);
 
         //Disable tabbing out of modal dialog and stop events from targets outside of dialog
         doc.on('keydown.' + this.id,
@@ -178,15 +170,6 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
         $(document).off(this.blockEvents).off('keydown.' + this.id);
     },
 
-    syncWindowResize: function() {
-        $(window).resize(function() {
-            $(document.body).children('.ui-widget-overlay').css({
-                'width': $(document).width()
-                ,'height': $(document).height()
-            });
-        });
-    },
-
     show: function() {
         if(this.isVisible()) {
             return;
@@ -234,6 +217,8 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
     },
 
     postShow: function() {
+        this.fireBehaviorEvent('open');
+        
         PrimeFaces.invokeDeferredRenders(this.id);
         
         //execute user defined callback
@@ -469,7 +454,7 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
         else {
             this.saveState();
  
-           var win = $(window);
+            var win = $(window);
 
             this.jq.addClass('ui-dialog-maximized').css({
                 'width': win.width() - 6
@@ -480,9 +465,10 @@ PrimeFaces.widget.Dialog = PrimeFaces.widget.BaseWidget.extend({
             });
 
             //maximize content
+            var contentPadding = this.content.innerHeight() - this.content.height();
             this.content.css({
                 width: 'auto',
-                height: 'auto'
+                height: this.jq.height() - this.titlebar.outerHeight() - contentPadding
             });
 
             this.maximizeIcon.removeClass('ui-state-hover').children('.ui-icon').removeClass('ui-icon-extlink').addClass('ui-icon-newwin');

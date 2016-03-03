@@ -127,6 +127,10 @@ public class SelectManyCheckboxRenderer extends SelectManyRenderer {
             }
         }
         
+        if(idx != 0 && (idx % columns) != 0) {
+            writer.endElement("div");
+        }
+        
         writer.endElement("div");
     }
     
@@ -139,6 +143,7 @@ public class SelectManyCheckboxRenderer extends SelectManyRenderer {
         
         writer.startElement("table", checkbox);
         writer.writeAttribute("id", clientId, "id");
+        writer.writeAttribute("role", "presentation", null);
         writer.writeAttribute("class", styleClass, "styleClass");
         if(style != null) {
             writer.writeAttribute("style", style, "style");
@@ -151,6 +156,7 @@ public class SelectManyCheckboxRenderer extends SelectManyRenderer {
     
     protected void encodeOptionInput(FacesContext context, SelectManyCheckbox checkbox, String id, String name, boolean checked, boolean disabled, String value) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
+        String tabindex = checkbox.getTabindex();
         
         writer.startElement("div", null);
         writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
@@ -160,6 +166,9 @@ public class SelectManyCheckboxRenderer extends SelectManyRenderer {
         writer.writeAttribute("name", name, null);
         writer.writeAttribute("type", "checkbox", null);
         writer.writeAttribute("value", value, null);
+        if(tabindex != null) {
+            writer.writeAttribute("tabindex", tabindex, null);
+        }
 
         renderOnchange(context, checkbox);
         

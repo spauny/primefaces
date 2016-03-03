@@ -71,24 +71,33 @@ public class TreeTableRenderer extends CoreRenderer {
         //decode selection
         if(selectionMode != null) {
             String selectionValue = params.get(tt.getClientId(context) + "_selection");
+            boolean isSingle = selectionMode.equalsIgnoreCase("single");
             
-            if(!isValueBlank(selectionValue)) {
-                if(selectionMode.equals("single")) {
-                    tt.setRowKey(selectionValue);
-
+            if(isValueBlank(selectionValue)) {
+                if(isSingle)
+                    tt.setSelection(null);
+                else
+                    tt.setSelection(new TreeNode[0]);
+            }
+            else {
+                String[] selectedRowKeys = selectionValue.split(",");
+                
+                if(isSingle) {
+                    tt.setRowKey(selectedRowKeys[0]);
                     tt.setSelection(tt.getRowNode());
                 } 
                 else {
-                    String[] rowKeys = selectionValue.split(",");
-                    TreeNode[] selection = new TreeNode[rowKeys.length];
+                    List<TreeNode> selectedNodes = new ArrayList<TreeNode>();
 
-                    for(int i = 0; i < rowKeys.length; i++) {
-                       tt.setRowKey(rowKeys[i]);
-
-                       selection[i] = tt.getRowNode();
+                    for(int i = 0; i < selectedRowKeys.length; i++) {
+                        tt.setRowKey(selectedRowKeys[i]);
+                        TreeNode rowNode = tt.getRowNode();
+                        if(rowNode != null) {
+                            selectedNodes.add(rowNode);
+                        }
                     }
 
-                    tt.setSelection(selection);
+                    tt.setSelection(selectedNodes.toArray(new TreeNode[selectedNodes.size()]));
                 }
 
                 tt.setRowKey(null);     //cleanup
@@ -131,7 +140,10 @@ public class TreeTableRenderer extends CoreRenderer {
             TreeNode node = tt.getRowNode();
             node.setExpanded(true);
             
-            encodeNodeChildren(context, tt, node);
+            if(tt.getExpandMode().equals("self"))
+                encodeNode(context, tt, node);
+            else
+                encodeNodeChildren(context, tt, node);
         }
         else if(tt.isSortRequest(context)) {
             encodeSort(context, tt);
@@ -160,7 +172,12 @@ public class TreeTableRenderer extends CoreRenderer {
             .attr("scrollable", tt.isScrollable(), false)
             .attr("scrollHeight", tt.getScrollHeight(), null)
             .attr("scrollWidth", tt.getScrollWidth(), null)
-            .attr("nativeElements", tt.isNativeElements(), false);
+            .attr("nativeElements", tt.isNativeElements(), false)
+            .attr("expandMode", tt.getExpandMode(), "children");
+        
+        if(tt.isStickyHeader()) {
+            wb.attr("stickyHeader", true);
+        }
         
         encodeClientBehaviors(context, tt);
 
@@ -230,7 +247,7 @@ public class TreeTableRenderer extends CoreRenderer {
 
         writer.startElement("div", null);
         writer.writeAttribute("class", TreeTable.SCROLLABLE_BODY_CLASS, null);
-        if(scrollHeight != null && scrollHeight.indexOf("%") == -1) {
+        if(scrollHeight != null && scrollHeight.indexOf('%') == -1) {
             writer.writeAttribute("style", "height:" + scrollHeight + "px", null);
         }
         writer.startElement("table", null);
@@ -526,7 +543,7 @@ public class TreeTableRenderer extends CoreRenderer {
         }
 
         writer.startElement("th", null);
-        writer.writeAttribute("id", column.getClientId(context), null);
+        writer.writeAttribute("id", column.getContainerClientId(context), null);
         writer.writeAttribute("class", columnClass, null);
         writer.writeAttribute("role", "columnheader", null);
         if(style != null) writer.writeAttribute("style", style, null);

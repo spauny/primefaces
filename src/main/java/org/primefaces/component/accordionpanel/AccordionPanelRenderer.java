@@ -1,11 +1,11 @@
 /*
  * Copyright 2009-2015 PrimeTek.
  *
- * Licensed under PrimeFaces Commercial License, Version 1.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.primefaces.org/elite/license.xhtml
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -121,6 +121,10 @@ public class AccordionPanelRenderer extends CoreRenderer {
         wb.attr("multiple", multiple, false)
         .callback("onTabChange", "function(panel)", acco.getOnTabChange())
         .callback("onTabShow", "function(panel)", acco.getOnTabShow());
+        
+        if(acco.getTabController() != null) {
+            wb.attr("controlled", true);
+        }
         
         encodeClientBehaviors(context, acco);
         

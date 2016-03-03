@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 PrimeTek.
+ * Copyright 2009-2015 PrimeTek.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import javax.el.ValueExpression;
 import javax.faces.FacesException;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UINamingContainer;
+import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.model.SelectItem;
@@ -45,6 +46,7 @@ import org.primefaces.renderkit.DataRenderer;
 import org.primefaces.util.ComponentUtils;
 import org.primefaces.util.Constants;
 import org.primefaces.util.HTML;
+import org.primefaces.util.MessageFactory;
 import org.primefaces.util.WidgetBuilder;
 
 public class DataTableRenderer extends DataRenderer {
@@ -194,9 +196,10 @@ public class DataTableRenderer extends DataRenderer {
             wb.attr("stickyHeader", true);
         }
 
-        wb.attr("tabindex", table.getTabindex(), null)
+        wb.attr("tabindex", table.getTabindex(), "0")
             .attr("reflow", table.isReflow(), false)
-            .attr("rowHover", table.isRowHover(), false);
+            .attr("rowHover", table.isRowHover(), false)
+            .attr("lazyCache", table.isLazyCache(), false);
         
         //Behaviors
         encodeClientBehaviors(context, table);
@@ -228,6 +231,10 @@ public class DataTableRenderer extends DataRenderer {
         writer.writeAttribute("class", containerClass, "styleClass");
         if(style != null) {
             writer.writeAttribute("style", style, "style");
+        }
+        
+        if(table.isReflow()) {
+            encodeSortableHeaderOnReflow(context, table);
         }
         
         encodeFacet(context, table, table.getHeader(), DataTable.HEADER_CLASS);
@@ -387,7 +394,7 @@ public class DataTableRenderer extends DataRenderer {
         writer.startElement("div", null);
         writer.writeAttribute("class", DataTable.SCROLLABLE_BODY_CLASS, null);
         writer.writeAttribute("tabindex", "-1", null);
-        if(scrollHeight != null && scrollHeight.indexOf("%") == -1) {
+        if(scrollHeight != null && scrollHeight.indexOf('%') == -1) {
             writer.writeAttribute("style", "height:" + scrollHeight + "px", null);
         }
         writer.startElement("table", null);
@@ -470,11 +477,13 @@ public class DataTableRenderer extends DataRenderer {
                 style = "width:" + width + unit;
         }
         
+        String ariaHeaderLabel = getHeaderLabel(context, column);
+        
         writer.startElement("th", null);
         writer.writeAttribute("id", clientId, null);
         writer.writeAttribute("class", columnClass, null);
         writer.writeAttribute("role", "columnheader", null);
-        
+        writer.writeAttribute("aria-label", ariaHeaderLabel, null);
         if(style != null) writer.writeAttribute("style", style, null);
         if(column.getRowspan() != 1) writer.writeAttribute("rowspan", column.getRowspan(), null);
         if(column.getColspan() != 1) writer.writeAttribute("colspan", column.getColspan(), null);
@@ -501,7 +510,7 @@ public class DataTableRenderer extends DataRenderer {
         }
         
         if(selectionMode != null && selectionMode.equalsIgnoreCase("multiple")) {
-            encodeCheckbox(context, table, false, false, HTML.CHECKBOX_ALL_CLASS);
+            encodeCheckbox(context, table, false, false, HTML.CHECKBOX_ALL_CLASS, true);
         }
         
         writer.endElement("th");
@@ -588,7 +597,20 @@ public class DataTableRenderer extends DataRenderer {
                     filterValue = (columnFilterValue == null) ? Constants.EMPTY_STRING: columnFilterValue.toString();
                 }
             }
+            
+            //aria
+            String ariaLabelId = filterId + "_label";
+            String ariaHeaderLabel = getHeaderLabel(context, column);
+            
+            String ariaMessage = MessageFactory.getMessage(DataTable.ARIA_FILTER_BY, new Object[]{ariaHeaderLabel});
 
+            writer.startElement("label", null);
+            writer.writeAttribute("id", ariaLabelId, null);
+            writer.writeAttribute("for", filterId, null);
+            writer.writeAttribute("class", "ui-helper-hidden", null);
+            writer.writeText(ariaMessage, null);
+            writer.endElement("label");
+            
             if(column.getValueExpression("filterOptions") == null) {
                 filterStyleClass = filterStyleClass == null ? DataTable.COLUMN_INPUT_FILTER_CLASS : DataTable.COLUMN_INPUT_FILTER_CLASS + " " + filterStyleClass;
 
@@ -598,6 +620,7 @@ public class DataTableRenderer extends DataRenderer {
                 writer.writeAttribute("class", filterStyleClass, null);
                 writer.writeAttribute("value", filterValue , null);
                 writer.writeAttribute("autocomplete", "off", null);
+                writer.writeAttribute("aria-labelledby", ariaLabelId, null);
 
                 if(disableTabbing)
                     writer.writeAttribute("tabindex", "-1", null);
@@ -617,6 +640,7 @@ public class DataTableRenderer extends DataRenderer {
                 writer.writeAttribute("id", filterId, null);
                 writer.writeAttribute("name", filterId, null);
                 writer.writeAttribute("class", filterStyleClass, null);
+                writer.writeAttribute("aria-labelledby", ariaLabelId, null);
 
                 if(disableTabbing)
                     writer.writeAttribute("tabindex", "-1", null);
@@ -816,6 +840,9 @@ public class DataTableRenderer extends DataRenderer {
             writer.startElement("tbody", null);
             writer.writeAttribute("id", tbodyClientId, null);
             writer.writeAttribute("class", DataTable.DATA_CLASS, null);
+            
+            if(table.isRowSelectionEnabled())
+                writer.writeAttribute("tabindex", table.getTabindex(), null);
         }
 
         if(hasData) {
@@ -948,10 +975,10 @@ public class DataTableRenderer extends DataRenderer {
             
         if(userRowStyleClass != null)
             rowStyleClass = rowStyleClass + " " + userRowStyleClass;
-
+        
         if(table.isExpandedRow())
             rowStyleClass = rowStyleClass + " " + DataTable.EXPANDED_ROW_CLASS;
-        
+
         writer.startElement("tr", null);
         writer.writeAttribute("data-ri", rowIndex, null);
         if(rowKey != null) {
@@ -995,7 +1022,7 @@ public class DataTableRenderer extends DataRenderer {
         boolean selectionEnabled = column.getSelectionMode() != null;
         int priority = column.getPriority();
         String style = column.getStyle();
-        String styleClass = selectionEnabled ? DataTable.SELECTION_COLUMN_CLASS : (column.getCellEditor() != null) ? DataTable.EDITABLE_COLUMN_CLASS : null;
+        String styleClass = selectionEnabled ? DataTable.SELECTION_COLUMN_CLASS : (column.getCellEditor() != null && column.getCellEditor().isRendered()) ? DataTable.EDITABLE_COLUMN_CLASS : null;
         styleClass = (column.isSelectRow()) ? styleClass : (styleClass == null) ? DataTable.UNSELECTABLE_COLUMN_CLASS : styleClass + " " + DataTable.UNSELECTABLE_COLUMN_CLASS;
         styleClass = (column.isVisible()) ? styleClass : (styleClass == null) ? DataTable.HIDDEN_COLUMN_CLASS : styleClass + " " + DataTable.HIDDEN_COLUMN_CLASS;
         String userStyleClass = column.getStyleClass();
@@ -1154,7 +1181,7 @@ public class DataTableRenderer extends DataRenderer {
             encodeRadio(context, table, selected, disabled);
         } 
         else if(selectionMode.equalsIgnoreCase("multiple")) {
-            encodeCheckbox(context, table, selected, disabled, HTML.CHECKBOX_CLASS);
+            encodeCheckbox(context, table, selected, disabled, HTML.CHECKBOX_CLASS, false);
         } 
         else {
             throw new FacesException("Invalid column selection mode:" + selectionMode);
@@ -1193,11 +1220,11 @@ public class DataTableRenderer extends DataRenderer {
         }        
     }
 
-    protected void encodeCheckbox(FacesContext context, DataTable table, boolean checked, boolean disabled, String styleClass) throws IOException {
+    protected void encodeCheckbox(FacesContext context, DataTable table, boolean checked, boolean disabled, String styleClass, boolean isHeaderCheckbox) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
         
         if(table.isNativeElements()) {
-            encodeNativeCheckbox(context, table, checked, disabled);
+            encodeNativeCheckbox(context, table, checked, disabled, isHeaderCheckbox);
         }
         else {
             String boxClass = HTML.CHECKBOX_BOX_CLASS;
@@ -1210,7 +1237,7 @@ public class DataTableRenderer extends DataRenderer {
 
             writer.startElement("div", null);
             writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
-            encodeNativeCheckbox(context, table, checked, disabled);
+            encodeNativeCheckbox(context, table, checked, disabled, isHeaderCheckbox);
             writer.endElement("div");
 
             writer.startElement("div", null);
@@ -1224,12 +1251,19 @@ public class DataTableRenderer extends DataRenderer {
         }
     }
     
-    protected void encodeNativeCheckbox(FacesContext context, DataTable table, boolean checked, boolean disabled) throws IOException {
+    protected void encodeNativeCheckbox(FacesContext context, DataTable table, boolean checked, boolean disabled, boolean isHeaderCheckbox) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
+        
+        String ariaRowLabel = table.getAriaRowLabel();
+        if(isHeaderCheckbox) {
+            ariaRowLabel = MessageFactory.getMessage(DataTable.ARIA_HEADER_CHECKBOX_ALL, new Object[]{});
+        }
         
         writer.startElement("input", null);
         writer.writeAttribute("type", "checkbox", null);
         writer.writeAttribute("name", table.getClientId(context) + "_checkbox", null);
+        writer.writeAttribute("aria-label", ariaRowLabel, null);
+        writer.writeAttribute("aria-checked", String.valueOf(checked), null);
         
         if(checked) {
             writer.writeAttribute("checked", "checked", null);
@@ -1285,5 +1319,91 @@ public class DataTableRenderer extends DataRenderer {
         }
         
         return false;
+    }
+    
+    protected String getHeaderLabel(FacesContext context, UIColumn column) {
+        String ariaHeaderText = column.getAriaHeaderText();
+        
+        // for headerText of column 
+        if(ariaHeaderText == null) {
+            ariaHeaderText = column.getHeaderText();
+        }
+
+        // for header facet
+        if(ariaHeaderText == null) {
+            UIComponent header = column.getFacet("header");
+            if(header != null) {
+                if(header instanceof UIPanel) {
+                    for(UIComponent child : header.getChildren()) {
+                        if(child.isRendered()) {
+                            String value = ComponentUtils.getValueToRender(context, child);
+
+                            if(value != null) {
+                                ariaHeaderText = value;
+                                break;
+                            }         
+                        }
+                    }
+                }
+                else {
+                    ariaHeaderText = ComponentUtils.getValueToRender(context, header);
+                }
+            }
+        }
+
+        return ariaHeaderText;
+    }
+    
+    protected void encodeSortableHeaderOnReflow(FacesContext context, DataTable table) throws IOException {
+        ResponseWriter writer = context.getResponseWriter();
+        List<String> options = getSortableHeadersText(context, table);
+        
+        if(!options.isEmpty()) {
+            String reflowId = table.getContainerClientId(context) + "_reflowDD";
+            
+            writer.startElement("label", null);
+            writer.writeAttribute("id", reflowId + "_label", null);
+            writer.writeAttribute("for", reflowId, null);
+            writer.writeAttribute("class", "ui-reflow-label", null);
+            writer.writeText(MessageFactory.getMessage(DataTable.SORT_LABEL, null), null);
+            writer.endElement("label");
+            
+            writer.startElement("select", null);
+            writer.writeAttribute("id", reflowId, null);
+            writer.writeAttribute("name", reflowId, null);
+            writer.writeAttribute("class", "ui-reflow-dropdown ui-state-default", null);
+            
+            for(int headerIndex = 0; headerIndex < options.size(); headerIndex++) {
+                for(int order = 0; order < 2; order++) {
+                    String orderVal = (order==0) ? MessageFactory.getMessage(DataTable.SORT_ASC, null) : MessageFactory.getMessage(DataTable.SORT_DESC, null);
+                    
+                    writer.startElement("option", null);
+                    writer.writeAttribute("value", headerIndex + "_" + order, null);
+                    writer.write(options.get(headerIndex) + " " + orderVal);
+                    writer.endElement("option");
+                }
+            }
+            
+            writer.endElement("select");
+        }
+    }
+    
+    protected List<String> getSortableHeadersText(FacesContext context, DataTable table) {
+        List<UIColumn> columns = table.getColumns();
+        List<String> headersText = new ArrayList<String>();
+        ValueExpression columnSortByVE = null;
+        boolean sortable = false;
+        
+        for(UIColumn column : columns) {
+            columnSortByVE = column.getValueExpression("sortBy");
+            sortable = (columnSortByVE != null && column.isSortable());
+            if(sortable) {
+                String headerText = getHeaderLabel(context, column);
+                if(headerText != null) {
+                    headersText.add(headerText);
+                }
+            }
+        }
+        return headersText;
     }
 }

@@ -76,8 +76,13 @@ PrimeFaces.widget.BlockUI = PrimeFaces.widget.BaseWidget.extend({
             this.blocker.show();
 
         if(this.hasContent()) {
-            this.content.fadeIn();
+            if(this.cfg.animate)
+                this.content.fadeIn();
+            else
+                this.content.show();
         }
+        
+        this.block.attr('aria-busy', true);
     },
     
     hide: function() {
@@ -87,8 +92,13 @@ PrimeFaces.widget.BlockUI = PrimeFaces.widget.BaseWidget.extend({
             this.blocker.hide();
 
         if(this.hasContent()) {
-            this.content.fadeOut();
+            if(this.cfg.animate)
+                this.content.fadeOut();
+            else
+                this.content.hide();
         }
+        
+        this.block.attr('aria-busy', false);
     },
     
     render: function() {   
@@ -106,7 +116,7 @@ PrimeFaces.widget.BlockUI = PrimeFaces.widget.BaseWidget.extend({
             this.content = this.content.clone();
         }
         
-        this.block.css('position', 'relative').append(this.blocker).append(this.content);
+        this.block.css('position', 'relative').attr('aria-busy', this.cfg.blocked).append(this.blocker).append(this.content);
     
         if(this.block.length > 1) {
             this.blocker = $(PrimeFaces.escapeClientId(this.id + '_blocker'));

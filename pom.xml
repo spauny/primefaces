@@ -11,7 +11,7 @@
     <groupId>org.primefaces</groupId>
     <artifactId>primefaces</artifactId>
     <packaging>jar</packaging>
-    <version>5.4-SNAPSHOT</version>
+    <version>6.0-SNAPSHOT</version>
     <name>primefaces</name>
     <url>http://www.primefaces.org</url>
 
@@ -78,7 +78,7 @@
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
-            <version>1.0.0.GA</version>
+            <version>1.1.0.Final</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -92,13 +92,13 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.7</version>
+            <version>3.13</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.7</version>
+            <version>3.13</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -166,19 +166,19 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Atmosphere --> 
+        <!-- Atmosphere -->
        <dependency>
             <groupId>org.atmosphere</groupId>
             <artifactId>atmosphere-runtime</artifactId>
-            <version>2.4.0-RC6</version>
+            <version>2.4.1</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
-          <groupId>javax.inject</groupId>
-          <artifactId>javax.inject</artifactId>
-          <version>1</version>
-          <scope>provided</scope>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>6.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Cache -->
@@ -355,13 +355,13 @@
                             <insertNewLine>true</insertNewLine>
                             <output>${project.build.directory}/classes/META-INF/resources/primefaces/primefaces.css</output>
                             <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/core/core.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/jquery/ui/jquery-ui.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/accordion/accordion.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/autocomplete/autocomplete.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/blockui/blockui.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/carousel/carousel.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/columntoggler/columntoggler.css</include>
-                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/core/core.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/dashboard/dashboard.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/datalist/datalist.css</include>
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/datagrid/datagrid.css</include>
@@ -477,6 +477,40 @@
                                 <include>${project.build.directory}/classes/META-INF/resources/primefaces/mobile/widgets/tabview.js</include>
                             </includes>
                         </aggregation>
+                        <aggregation>
+                            <insertNewLine>true</insertNewLine>
+                            <output>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/inputnumber.js</output>
+                            <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/0-autoNumeric.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/1-jquery.metadata.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/2-inputnumber.js</include>
+                            </includes>
+                        </aggregation>
+                        <aggregation>
+                            <insertNewLine>true</insertNewLine>
+                            <output>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/keyfilter.js</output>
+                            <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/0-jquery.keyfilter.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/1-keyfilter.js</include>
+                            </includes>
+                        </aggregation>
+                        <aggregation>
+                            <insertNewLine>true</insertNewLine>
+                            <output>${project.build.directory}/classes/META-INF/resources/primefaces/knob/knob.js</output>
+                            <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/excanvas/excanvas.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/knob/1-jquery.knob.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/knob/2-knob.js</include>
+                            </includes>
+                        </aggregation>
+                        <aggregation>
+                            <insertNewLine>true</insertNewLine>
+                            <output>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/timeline.js</output>
+                            <includes>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/0-timeline.js</include>
+                                <include>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/1-timeline.js</include>
+                            </includes>
+                        </aggregation>
                     </aggregations>
                 </configuration>
             </plugin>
@@ -551,6 +585,7 @@
                         <version>2.9.1</version>
                         <configuration>
                             <sourcepath>${basedir}/src/main/java;${basedir}/target/generated-sources/maven-jsf-plugin</sourcepath>
+                            <additionalparam>-Xdoclint:none</additionalparam>
                         </configuration>
                         <executions>
                             <execution>
@@ -585,13 +620,13 @@
                                     <insertNewLine>true</insertNewLine>
                                     <output>${project.build.directory}/classes/META-INF/resources/primefaces/primefaces.css</output>
                                     <includes>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/core/core.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/jquery/ui/jquery-ui.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/accordion/accordion.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/autocomplete/autocomplete.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/blockui/blockui.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/carousel/carousel.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/columntoggler/columntoggler.css</include>
-                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/core/core.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/dashboard/dashboard.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/datalist/datalist.css</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/datagrid/datagrid.css</include>
@@ -705,6 +740,40 @@
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/mobile/widgets/overlaypanel.js</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/mobile/widgets/panel.js</include>
                                         <include>${project.build.directory}/classes/META-INF/resources/primefaces/mobile/widgets/tabview.js</include>
+                                    </includes>
+                                </aggregation>
+                                <aggregation>
+                                    <insertNewLine>true</insertNewLine>
+                                    <output>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/inputnumber.js</output>
+                                    <includes>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/0-autoNumeric.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/1-jquery.metadata.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/inputnumber/2-inputnumber.js</include>
+                                    </includes>
+                                </aggregation>
+                                <aggregation>
+                                    <insertNewLine>true</insertNewLine>
+                                    <output>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/keyfilter.js</output>
+                                    <includes>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/0-jquery.keyfilter.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/keyfilter/1-keyfilter.js</include>
+                                    </includes>
+                                </aggregation>
+                                <aggregation>
+                                    <insertNewLine>true</insertNewLine>
+                                    <output>${project.build.directory}/classes/META-INF/resources/primefaces/knob/knob.js</output>
+                                    <includes>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/excanvas/excanvas.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/knob/1-jquery.knob.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/knob/2-knob.js</include>
+                                    </includes>
+                                </aggregation>
+                                <aggregation>
+                                    <insertNewLine>true</insertNewLine>
+                                    <output>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/timeline.js</output>
+                                    <includes>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/0-timeline.js</include>
+                                        <include>${project.build.directory}/classes/META-INF/resources/primefaces/timeline/1-timeline.js</include>
                                     </includes>
                                 </aggregation>
                             </aggregations>

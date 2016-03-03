@@ -15,28 +15,30 @@
  */
 package org.primefaces.component.accordionpanel;
 
+
 import javax.faces.view.facelets.ComponentConfig;
 import javax.faces.view.facelets.ComponentHandler;
+import javax.faces.view.facelets.MetaRule;
 import javax.faces.view.facelets.MetaRuleset;
+import org.primefaces.event.TabEvent;
 
-import org.primefaces.event.TabChangeEvent;
 import org.primefaces.facelets.MethodRule;
 
-public class AccordionPanelHandler extends ComponentHandler {
+public class AccordionPanelComponentHandler extends ComponentHandler {
 
-	private static final MethodRule TAB_CHANGE_LISTENER =
-			new MethodRule("tabChangeListener", String.class, new Class[]{TabChangeEvent.class});
-	
-	public AccordionPanelHandler(ComponentConfig config) {
+	private static final MetaRule TABCHANGE_CONTROLLER =
+			new MethodRule("tabController", Boolean.class, new Class[]{TabEvent.class});
+
+	public AccordionPanelComponentHandler(ComponentConfig config) {
 		super(config);
 	}
-
+	
 	@SuppressWarnings("unchecked")
-	protected MetaRuleset createMetaRuleset(Class type) {
-		MetaRuleset metaRuleset = super.createMetaRuleset(type);
-
-		metaRuleset.addRule(TAB_CHANGE_LISTENER);
-
-		return metaRuleset;
-	}
+	protected MetaRuleset createMetaRuleset(Class type) { 
+		MetaRuleset metaRuleset = super.createMetaRuleset(type); 
+		
+		metaRuleset.addRule(TABCHANGE_CONTROLLER);
+		
+		return metaRuleset; 
+	} 
 }

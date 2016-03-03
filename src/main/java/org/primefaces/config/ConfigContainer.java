@@ -17,8 +17,6 @@ package org.primefaces.config;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -30,19 +28,9 @@ import javax.faces.component.UIInput;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.validation.Validation;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
-import org.primefaces.util.ComponentUtils;
+
 
 import org.primefaces.util.Constants;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 /**
  * Container for all config parameters.
@@ -66,6 +54,7 @@ public class ConfigContainer {
     private boolean transformMetadataEnabled = false;
     private boolean legacyWidgetNamespace = false;
     private boolean beanValidationDisabled = false;
+    private boolean interpolateClientSideValidationMessages = false;
 
     // internal config
     private boolean beanValidationAvailable = false;
@@ -73,6 +62,7 @@ public class ConfigContainer {
     private boolean el22Available = false;
     private boolean jsf22 = false;
     private boolean jsf21 = false;
+    private boolean bv11 = false;
 
     // build properties
     private String buildVersion = null;
@@ -103,6 +93,8 @@ public class ConfigContainer {
         else {
             jsf21 = detectJSF21();
         }
+        
+        bv11 = detectBV11();
 
         stringConverterAvailable = null != context.getApplication().createConverter(String.class);
     }
@@ -147,6 +139,9 @@ public class ConfigContainer {
     
         value = externalContext.getInitParameter(Constants.ContextParams.BEAN_VALIDATION_DISABLED);
         beanValidationDisabled = (value == null) ? false : Boolean.valueOf(value);
+        
+        value = externalContext.getInitParameter(Constants.ContextParams.INTERPOLATE_CLIENT_SIDE_VALIDATION_MESSAGES);
+        interpolateClientSideValidationMessages = (value == null) ? false : Boolean.valueOf(value);
     }
 
     protected void initValidateEmptyFields(FacesContext context) {
@@ -271,6 +266,17 @@ public class ConfigContainer {
         }
     }
 
+    private boolean detectBV11()
+    {
+        try {
+            Class.forName("javax.validation.executable.ExecutableValidator");
+            return true;
+        }
+        catch (ClassNotFoundException ex) {
+            return false;
+        }        
+    }
+    
     protected void initConfigFromWebXml(FacesContext context) {
         errorPages = WebXmlParser.getErrorPages(context);
         if (errorPages == null) {
@@ -357,4 +363,13 @@ public class ConfigContainer {
     public boolean isFontAwesomeEnabled() {
         return fontAwesomeEnabled;
     }
+
+    public boolean isInterpolateClientSideValidationMessages() {
+        return interpolateClientSideValidationMessages;
+    }
+
+    public boolean isAtLeastBV11() {
+        return bv11;
+    }
+    
 }

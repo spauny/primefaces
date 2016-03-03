@@ -18,6 +18,7 @@ package org.primefaces.application.resource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.el.ELContext;
@@ -26,10 +27,8 @@ import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.primefaces.context.RequestContext;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.util.Constants;
-import org.primefaces.util.StringEncrypter;
 
 public class StreamedContentHandler extends BaseDynamicContentHandler {
 
@@ -38,19 +37,32 @@ public class StreamedContentHandler extends BaseDynamicContentHandler {
     public void handle(FacesContext context) throws IOException {
         Map<String,String> params = context.getExternalContext().getRequestParameterMap();
         String library = params.get("ln");
-        String dynamicContentId = (String) params.get(Constants.DYNAMIC_CONTENT_PARAM);
-        StringEncrypter strEn = RequestContext.getCurrentInstance().getEncrypter();
+        String sessionKey = (String) params.get(Constants.DYNAMIC_CONTENT_PARAM);
 
-        if(dynamicContentId != null && library != null && library.equals(Constants.LIBRARY)) {
+        if(sessionKey != null && library != null && library.equals(Constants.LIBRARY)) {
             StreamedContent streamedContent = null;
             boolean cache = Boolean.valueOf(params.get(Constants.DYNAMIC_CONTENT_CACHE_PARAM));
 
             try {
-                // see #6448
-                dynamicContentId = dynamicContentId.replaceAll(" ", "+");
-
-                String dynamicContentEL = strEn.decrypt(dynamicContentId);
                 ExternalContext externalContext = context.getExternalContext();
+                Map<String,Object> session = externalContext.getSessionMap();
+                Map<String,String> dynamicResourcesMapping = (Map) session.get(Constants.DYNAMIC_RESOURCES_MAPPING);
+                String dynamicContentEL = null;
+                try {
+                    UUID.fromString(sessionKey);
+                } catch (IllegalArgumentException illegalArgumentException) {
+                    session.remove(sessionKey);
+                    throw new IOException("Not a valid key", illegalArgumentException);
+                }
+                
+                if(dynamicResourcesMapping != null) {
+                    dynamicContentEL = dynamicResourcesMapping.get(sessionKey);
+                    dynamicResourcesMapping.remove(sessionKey);
+                    
+                    if(dynamicResourcesMapping.isEmpty()) {
+                        session.remove(Constants.DYNAMIC_RESOURCES_MAPPING);
+                    }
+                }
 
                 if(dynamicContentEL != null) {
                     ELContext eLContext = context.getELContext();

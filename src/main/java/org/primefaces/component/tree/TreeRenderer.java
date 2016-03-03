@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 PrimeTek.
+ * Copyright 2009-2015 PrimeTek.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,20 +83,23 @@ public class TreeRenderer extends CoreRenderer {
                 tree.setSelection(tree.getRowNode());
             }
             else {
-                TreeNode[] selectedNodes = new TreeNode[selectedRowKeys.length];
+                List<TreeNode> selectedNodes = new ArrayList<TreeNode>();
 
                 for(int i = 0 ; i < selectedRowKeys.length; i++) {
                     tree.setRowKey(selectedRowKeys[i]);
-                    selectedNodes[i] = tree.getRowNode();
+                    TreeNode rowNode = tree.getRowNode();
+                    if(rowNode != null) {
+                        selectedNodes.add(rowNode);
+                    }
                 }
 
-                tree.setSelection(selectedNodes);
+                tree.setSelection(selectedNodes.toArray(new TreeNode[selectedNodes.size()]));
             }
 
             tree.setRowKey(null);
         }
         
-        if(tree.isCheckboxSelection() && tree.isDynamic() && tree.isSelectionRequest(context)) {
+        if(tree.isCheckboxSelection() && tree.isDynamic() && tree.isSelectionRequest(context) && tree.isPropagateSelectionDown()) {
             String selectedNodeRowKey = params.get(clientId + "_instantSelection");
             tree.setRowKey(selectedNodeRowKey);
             TreeNode selectedNode = tree.getRowNode();

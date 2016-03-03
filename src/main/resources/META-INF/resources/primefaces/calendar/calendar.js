@@ -86,7 +86,7 @@ PrimeFaces.widget.Calendar = PrimeFaces.widget.BaseWidget.extend({
         //extensions
         if(this.cfg.popup && this.cfg.showOn) {
             var triggerButton = this.jqEl.siblings('.ui-datepicker-trigger:button');
-            triggerButton.html('').addClass('ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only')
+            triggerButton.attr('aria-label',PrimeFaces.getAriaLabel('calendar.BUTTON')).attr('aria-haspopup', true).html('').addClass('ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only')
                         .append('<span class="ui-button-icon-left ui-icon ui-icon-calendar"></span><span class="ui-button-text">ui-button</span>');
 
             var title = this.jqEl.attr('title');
@@ -107,7 +107,10 @@ PrimeFaces.widget.Calendar = PrimeFaces.widget.BaseWidget.extend({
         this.input.data(PrimeFaces.CLIENT_ID_DATA, this.id);
 
         if (this.cfg.mask) {
-            var maskCfg = {placeholder:this.cfg.maskSlotChar||'_'};
+            var maskCfg = {
+                placeholder:this.cfg.maskSlotChar||'_',
+                autoclear:this.cfg.maskAutoClear
+            };
             this.input.mask(this.cfg.mask, maskCfg);
         }
     },
@@ -189,11 +192,6 @@ PrimeFaces.widget.Calendar = PrimeFaces.widget.BaseWidget.extend({
         this.cfg.dateFormat = pattern.substring(0, timeSeparatorIndex - 1);
         this.cfg.timeFormat = pattern.substring(timeSeparatorIndex, pattern.length);
 
-        //second
-        if(this.cfg.timeFormat.indexOf('ss') != -1) {
-            this.cfg.showSecond = true;
-        }
-
         //ampm
         if(this.cfg.timeFormat.indexOf('TT') != -1) {
             this.cfg.ampm = true;
@@ -210,6 +208,26 @@ PrimeFaces.widget.Calendar = PrimeFaces.widget.BaseWidget.extend({
 
         if(!this.cfg.showButtonPanel) {
             this.cfg.showButtonPanel = false;
+        }
+        
+        if(this.cfg.controlType == 'custom' && this.cfg.timeControlObject) {
+            this.cfg.controlType = this.cfg.timeControlObject;
+        }
+        
+        if(this.cfg.showHour) {
+            this.cfg.showHour = (this.cfg.showHour == "true") ? true : false;
+        }
+        
+        if(this.cfg.showMinute) {
+            this.cfg.showMinute = (this.cfg.showMinute == "true") ? true : false;
+        }
+        
+        if(this.cfg.showSecond) {
+            this.cfg.showSecond = (this.cfg.showSecond == "true") ? true : false;
+        }
+        
+        if(this.cfg.showMillisec) {
+            this.cfg.showMillisec = (this.cfg.showMillisec == "true") ? true : false;
         }
     },
 

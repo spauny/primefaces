@@ -61,6 +61,16 @@ public class CSVExporter extends Exporter {
         externalContext.responseFlushBuffer();
 	}
     
+    @Override
+    public void export(FacesContext facesContext, List<String> clientIds, String outputFileName, boolean pageOnly, boolean selectionOnly, String encodingType, MethodExpression preProcessor, MethodExpression postProcessor) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    @Override
+    public void export(FacesContext facesContext, String outputFileName, List<DataTable> tables, boolean pageOnly, boolean selectionOnly, String encodingType, MethodExpression preProcessor, MethodExpression postProcessor) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
     protected void addColumnFacets(Writer writer, DataTable table, ColumnType columnType) throws IOException {
         boolean firstCellWritten = false;
         

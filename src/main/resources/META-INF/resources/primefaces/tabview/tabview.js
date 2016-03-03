@@ -154,10 +154,14 @@ PrimeFaces.widget.TabView = PrimeFaces.widget.DeferredWidget.extend({
     },
         
     bindKeyEvents: function() {
-        var $this = this;
+        var $this = this,
+            tabs = this.navContainer.children('li');
         
-        this.navContainer.find('> li > a').on('focus.tabview', function(e) {
-            var focusedTab = $(this).parent();
+        /* For Screen Reader and Keyboard accessibility */
+        tabs.attr('tabindex', this.tabindex);
+        
+        tabs.on('focus.tabview', function(e) {
+            var focusedTab = $(this);
             focusedTab.addClass('ui-tabs-outline');
             
             if($this.cfg.scrollable) {
@@ -170,14 +174,14 @@ PrimeFaces.widget.TabView = PrimeFaces.widget.DeferredWidget.extend({
             }
         })
         .on('blur.tabview', function(){
-            $(this).parent().removeClass('ui-tabs-outline');
+            $(this).removeClass('ui-tabs-outline');
         })
         .on('keydown.tabview', function(e) {
             var keyCode = $.ui.keyCode,
             key = e.which;
 
             if(key === keyCode.SPACE || key === keyCode.ENTER || key === keyCode.NUMPAD_ENTER) {
-                $this.select($(this).parent().index());
+                $this.select($(this).index());
                 e.preventDefault();
             }
         });
@@ -405,8 +409,19 @@ PrimeFaces.widget.TabView = PrimeFaces.widget.DeferredWidget.extend({
                 this.cfg.selected--;
             }
             else if(index === this.cfg.selected) {
-                var newIndex = (this.cfg.selected === (length)) ? (this.cfg.selected - 1): this.cfg.selected;
-                this.select(newIndex, true);
+                var newIndex = (this.cfg.selected === (length)) ? (this.cfg.selected - 1): this.cfg.selected,
+                headers = this.navContainer.children('li'),
+                newPanelHeader = headers.eq(newIndex);
+        
+                if(newPanelHeader.hasClass('ui-state-disabled')) {
+                    var newHeader = headers.filter(':not(.ui-state-disabled):first');
+                    if(newHeader.length) {
+                        this.select(newHeader.index(), true);
+                    }
+                }
+                else {
+                    this.select(newIndex, true);
+                }
             }
         }
         else {

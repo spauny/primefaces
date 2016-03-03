@@ -50,6 +50,7 @@ public class HeadRenderer extends Renderer {
         boolean csvEnabled = cc.isClientSideValidationEnabled();
                 
         writer.startElement("head", component);
+        writer.writeAttribute("id", component.getClientId(context), "id");
         
         //First facet
         UIComponent first = component.getFacet("first");
@@ -99,9 +100,10 @@ public class HeadRenderer extends Renderer {
         writer.startElement("script", null);
         writer.writeAttribute("type", "text/javascript", null);
         writer.write("if(window.PrimeFaces){");
+        
+        writer.write("PrimeFaces.settings.locale='" + context.getViewRoot().getLocale() + "';");
 
         if (csvEnabled) {
-            writer.write("PrimeFaces.settings.locale='" + context.getViewRoot().getLocale() + "';");
             writer.write("PrimeFaces.settings.validateEmptyFields=" + cc.isValidateEmptyFields() + ";");
             writer.write("PrimeFaces.settings.considerEmptyStringNull=" + cc.isInterpretEmptyStringAsNull() + ";");
         }

@@ -17,7 +17,7 @@ package org.primefaces.util;
 
 public class Constants {
 
-    public class ContextParams {
+    public static class ContextParams {
         // JSF context params
         public static final String INTERPRET_EMPTY_STRING_AS_NULL = "javax.faces.INTERPRET_EMPTY_STRING_SUBMITTED_VALUES_AS_NULL";
         
@@ -37,9 +37,10 @@ public class Constants {
         public static final String TRANSFORM_METADATA = "primefaces.TRANSFORM_METADATA";
         public static final String LEGACY_WIDGET_NAMESPACE = "primefaces.LEGACY_WIDGET_NAMESPACE";
         public static final String BEAN_VALIDATION_DISABLED = "javax.faces.validator.DISABLE_DEFAULT_BEAN_VALIDATOR";
+        public static final String INTERPOLATE_CLIENT_SIDE_VALIDATION_MESSAGES = "primefaces.INTERPOLATE_CLIENT_SIDE_VALIDATION_MESSAGES";
     }
 
-    public class RequestParams {
+    public static class RequestParams {
         // JSF request params
         public static final String PARTIAL_REQUEST_PARAM = "javax.faces.partial.ajax";
         public static final String PARTIAL_UPDATE_PARAM = "javax.faces.partial.render";
@@ -50,6 +51,7 @@ public class Constants {
         // PF request params
         public static final String RESET_VALUES_PARAM = "primefaces.resetvalues";
         public static final String IGNORE_AUTO_UPDATE_PARAM = "primefaces.ignoreautoupdate";
+        public static final String SKIP_CHILDREN_PARAM = "primefaces.skipchildren";
     }
 
     public static final String DOWNLOAD_COOKIE = "primefaces.download";
@@ -61,11 +63,12 @@ public class Constants {
     public static final String DYNAMIC_CONTENT_PARAM = "pfdrid";
     public static final String DYNAMIC_CONTENT_CACHE_PARAM = "pfdrid_c";
     public static final String DYNAMIC_CONTENT_TYPE_PARAM = "pfdrt";
-
+    public static final String DYNAMIC_RESOURCES_MAPPING = "primefaces.dynamicResourcesMapping";
+    
     public final static String FRAGMENT_ID = "primefaces.fragment";
     public final static String FRAGMENT_AUTO_RENDERED = "primefaces.fragment.autorendered";
     
-    public class DIALOG_FRAMEWORK {
+    public static class DIALOG_FRAMEWORK {
         public final static String OUTCOME = "dialog.outcome";
         public final static String OPTIONS = "dialog.options";
         public final static String PARAMS = "dialog.params";

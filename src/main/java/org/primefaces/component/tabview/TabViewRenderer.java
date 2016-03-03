@@ -1,11 +1,11 @@
 /*
  * Copyright 2009-2015 PrimeTek.
  *
- * Licensed under PrimeFaces Commercial License, Version 1.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.primefaces.org/elite/license.xhtml
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -228,11 +228,12 @@ public class TabViewRenderer extends CoreRenderer {
         writer.writeAttribute("aria-label", tab.getAriaLabel(), null);
         if(tab.getTitleStyle() != null)  writer.writeAttribute("style", tab.getTitleStyle(), null);
         if(tab.getTitletip() != null)  writer.writeAttribute("title", tab.getTitletip(), null);
-
+        if(tabindex != null) writer.writeAttribute("tabindex", tabindex, null);
+        
         //title
         writer.startElement("a", null);
         writer.writeAttribute("href", "#" + tab.getClientId(context), null);
-        if(tabindex != null) writer.writeAttribute("tabindex", tabindex, null);
+        writer.writeAttribute("tabindex", "-1", null);
         if(titleFacet == null) {
         	String tabTitle = tab.getTitle(); 
         	if(tabTitle != null) {

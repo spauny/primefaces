@@ -199,6 +199,8 @@ public class CalendarRenderer extends InputRenderer {
         }
 
         if (calendar.hasTime()) {
+            String timeControlType = calendar.getTimeControlType();
+            
             wb.attr("timeOnly", calendar.isTimeOnly())
                 .attr("stepHour", calendar.getStepHour())
                 .attr("stepMinute", calendar.getStepMinute())
@@ -209,13 +211,23 @@ public class CalendarRenderer extends InputRenderer {
                 .attr("minuteMax", calendar.getMaxMinute())
                 .attr("secondMin", calendar.getMinSecond())
                 .attr("secondMax", calendar.getMaxSecond())
-                .attr("controlType", calendar.getTimeControlType(), null);
+                .attr("timeInput", calendar.isTimeInput())
+                .attr("controlType", timeControlType, null)
+                .attr("showHour", calendar.getShowHour(), null)
+                .attr("showMinute", calendar.getShowMinute(), null)
+                .attr("showSecond", calendar.getShowSecond(), null)
+                .attr("showMillisec", calendar.getShowMillisec(), null);
+            
+            String timeControlObject = calendar.getTimeControlObject();
+            if (timeControlObject != null && timeControlType.equalsIgnoreCase("custom")) {
+                wb.nativeAttr("timeControlObject", timeControlObject);
+            }
         }
 
         if (mask != null && !mask.equals("false")) {
             String patternTemplate = calendar.getPattern() == null ? pattern : calendar.getPattern();
             String maskTemplate = (mask.equals("true")) ? patternTemplate.replaceAll("[a-zA-Z]", "9") : mask;
-            wb.attr("mask", maskTemplate).attr("maskSlotChar", calendar.getMaskSlotChar(), null);
+            wb.attr("mask", maskTemplate).attr("maskSlotChar", calendar.getMaskSlotChar(), null).attr("maskAutoClear", calendar.isMaskAutoClear(), true);
         }
 
         encodeClientBehaviors(context, calendar);

@@ -1,5 +1,6 @@
 package org.primefaces.expression.impl;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.faces.FacesException;
@@ -8,6 +9,8 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIData;
 import javax.faces.component.UINamingContainer;
 import javax.faces.context.FacesContext;
+import org.primefaces.component.api.DynamicColumn;
+import org.primefaces.component.columns.Columns;
 import org.primefaces.expression.ClientIdSearchExpressionResolver;
 import org.primefaces.expression.SearchExpressionResolver;
 
@@ -32,7 +35,23 @@ public class RowExpressionResolver implements SearchExpressionResolver, ClientId
         String clientIds = "";
         
         for (UIComponent column : data.getChildren()) {
-            if (column instanceof UIColumn) {
+        	// handle dynamic columns
+			if (column instanceof Columns) {
+                
+                List<DynamicColumn> dynamicColumns = ((Columns) column).getDynamicColumns();
+                for (int i = 0; i < dynamicColumns.size(); i++) {
+                    DynamicColumn dynamicColumn = dynamicColumns.get(i);
+					for (UIComponent comp : column.getChildren()) {
+
+						if (clientIds.length() > 0) {
+							clientIds += " ";
+						}
+						
+						clientIds += data.getClientId(context) + seperatorChar + row + seperatorChar + dynamicColumn.getId() + seperatorChar + i + seperatorChar + comp.getId();
+					}
+				}
+			}
+			else if (column instanceof UIColumn) {
                 for (UIComponent cell : column.getChildren()) {
 
                     if (clientIds.length() > 0) {

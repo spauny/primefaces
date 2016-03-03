@@ -85,8 +85,8 @@ public class FileUploadRenderer extends CoreRenderer {
             
             wb.attr("auto", fileUpload.isAuto(), false)
                 .attr("dnd", fileUpload.isDragDropSupport(), true)
-                .attr("update", SearchExpressionFacade.resolveClientIds(context, fileUpload, update), null)
-                .attr("process", SearchExpressionFacade.resolveClientIds(context, fileUpload, process), null)
+                .attr("update", SearchExpressionFacade.resolveClientIds(context, fileUpload, update, SearchExpressionFacade.Options.VISIT_UNRENDERED), null)
+                .attr("process", SearchExpressionFacade.resolveClientIds(context, fileUpload, process, SearchExpressionFacade.Options.VISIT_UNRENDERED), null)
                 .attr("maxFileSize", fileUpload.getSizeLimit(), Long.MAX_VALUE)
                 .attr("fileLimit", fileUpload.getFileLimit(), Integer.MAX_VALUE)
                 .attr("invalidFileMessage", fileUpload.getInvalidFileMessage(), null)
@@ -195,11 +195,12 @@ public class FileUploadRenderer extends CoreRenderer {
 
             //text
             writer.startElement("span", null);
+            writer.writeAttribute("id", clientId + "_label", null);
             writer.writeAttribute("class", HTML.BUTTON_TEXT_CLASS, null);
             writer.writeText(fileUpload.getLabel(), "value");
             writer.endElement("span");
 
-            encodeInputField(context, fileUpload, fileUpload.getClientId(context) + "_input");
+            encodeInputField(context, fileUpload, fileUpload.getClientId(context));
 
             writer.endElement("span");
 
@@ -232,12 +233,13 @@ public class FileUploadRenderer extends CoreRenderer {
 
         //text
         writer.startElement("span", null);
+        writer.writeAttribute("id", clientId + "_label", null);
         writer.writeAttribute("class", HTML.BUTTON_TEXT_CLASS, null);
         writer.writeText(fileUpload.getLabel(), "value");
         writer.endElement("span");
 
         if (!disabled) {
-            encodeInputField(context, fileUpload, clientId + "_input");
+            encodeInputField(context, fileUpload, clientId);
         }
 
         writer.endElement("span");
@@ -245,17 +247,20 @@ public class FileUploadRenderer extends CoreRenderer {
 
     protected void encodeInputField(FacesContext context, FileUpload fileUpload, String clientId) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
+        String inputId = clientId + "_input";
 
         writer.startElement("input", null);
         writer.writeAttribute("type", "file", null);
-        writer.writeAttribute("id", clientId , null);
-        writer.writeAttribute("name", clientId, null);
+        writer.writeAttribute("id", inputId , null);
+        writer.writeAttribute("name", inputId, null);
 
         if (fileUpload.isMultiple()) writer.writeAttribute("multiple", "multiple", null);
         if (fileUpload.isDisabled()) writer.writeAttribute("disabled", "disabled", "disabled");
         if (fileUpload.getAccept() != null) writer.writeAttribute("accept", fileUpload.getAccept(), null);
         
         renderDynamicPassThruAttributes(context, fileUpload);
+        
+        writer.writeAttribute("aria-labelledby", clientId + "_label", null);
 
         writer.endElement("input");
     }

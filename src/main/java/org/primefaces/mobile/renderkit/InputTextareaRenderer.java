@@ -33,7 +33,8 @@ public class InputTextareaRenderer extends org.primefaces.component.inputtextare
         String style = inputTextarea.getStyle();
         String styleClass = inputTextarea.getStyleClass();
         styleClass = (styleClass == null) ? InputTextarea.MOBILE_STYLE_CLASS: InputTextarea.MOBILE_STYLE_CLASS + " " + styleClass;
-
+        styleClass = !inputTextarea.isDisabled() ? styleClass : styleClass + " ui-state-disabled";
+        
 		writer.startElement("textarea", inputTextarea);
         writer.writeAttribute("data-role", "none", null);
 		writer.writeAttribute("id", clientId, null);
@@ -41,14 +42,12 @@ public class InputTextareaRenderer extends org.primefaces.component.inputtextare
         writer.writeAttribute("class", styleClass, null); 
 
 		renderPassThruAttributes(context, inputTextarea, HTML.INPUT_TEXTAREA_ATTRS);
+        renderDomEvents(context, inputTextarea, HTML.INPUT_TEXT_EVENTS);
 
         if(inputTextarea.isDisabled()) writer.writeAttribute("disabled", "disabled", "disabled");
         if(inputTextarea.isReadonly()) writer.writeAttribute("readonly", "readonly", "readonly");
         if(style != null) writer.writeAttribute("style", style, null);  
-		if(valueToRender != null) writer.writeText(valueToRender, "value");  
-        
-        renderPassThruAttributes(context, inputTextarea, HTML.TEXTAREA_ATTRS_WITHOUT_EVENTS);
-        renderDomEvents(context, inputTextarea, HTML.INPUT_TEXT_EVENTS);
+		if(valueToRender != null) writer.writeText(valueToRender, "value");        
 
         writer.endElement("textarea");
 	}

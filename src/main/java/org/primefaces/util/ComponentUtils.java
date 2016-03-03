@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -175,7 +176,8 @@ public class ComponentUtils {
     	UIComponent resolvedComponent = SearchExpressionFacade.resolveComponent(
     			FacesContext.getCurrentInstance(),
     			component,
-    			expression);
+    			expression,
+                SearchExpressionFacade.Options.VISIT_UNRENDERED);
 
         if(resolvedComponent instanceof Widget) {
             return "PF('" + ((Widget) resolvedComponent).resolveWidgetVar() + "')";
@@ -470,5 +472,21 @@ public class ComponentUtils {
     @Deprecated
     public static UIComponent findParentForm(FacesContext context, UIComponent component) {
         return ComponentTraversalUtils.closestForm(context, component);
+    }
+    
+    /**
+     * Gets a {@link TimeZone} instance by the parameter "timeZone" which can be String or {@link TimeZone} or null.
+     *
+     * @param timeZone given time zone
+     * @return resolved TimeZone
+     */
+    public static TimeZone resolveTimeZone(Object timeZone) {
+        if (timeZone instanceof String) {
+            return TimeZone.getTimeZone((String) timeZone);
+        } else if (timeZone instanceof TimeZone) {
+            return (TimeZone) timeZone;
+        } else {
+            return TimeZone.getDefault();
+        }
     }
 }

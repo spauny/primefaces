@@ -119,6 +119,9 @@ public class PickListRenderer extends CoreRenderer {
             encodeListControls(context, pickList, PickList.TARGET_CONTROLS, labelDisplay);
         }
 
+        /* For ScreenReader */
+        encodeAriaRegion(context, clientId);
+        
 		writer.endElement("div");
 	}
 	
@@ -187,7 +190,7 @@ public class PickListRenderer extends CoreRenderer {
         writer.startElement("span", null);
         writer.writeAttribute("class", HTML.BUTTON_TEXT_CLASS, null);
         if(tooltip) {
-            writer.write("ui-button");
+            writer.write(title);
         } else {
             writer.writeText(title, null);
         }
@@ -216,7 +219,9 @@ public class PickListRenderer extends CoreRenderer {
 
         writer.startElement("ul", null);
         writer.writeAttribute("class", styleClass, null);
-
+        writer.writeAttribute("tabindex", "0", null);
+        writer.writeAttribute("role", "menu", null);
+        
         encodeOptions(context, pickList, model);
 
         writer.endElement("ul");
@@ -258,7 +263,8 @@ public class PickListRenderer extends CoreRenderer {
             writer.writeAttribute("class", itemClass, null);
             writer.writeAttribute("data-item-value", itemValue, null);
             writer.writeAttribute("data-item-label", itemLabel, null);
-			
+			writer.writeAttribute("role", "menuitem", null);
+            
             if(pickList.getChildCount() > 0) {
                 writer.startElement("table", null);
                 writer.startElement("tbody", null);
@@ -340,7 +346,19 @@ public class PickListRenderer extends CoreRenderer {
         
         writer.endElement("div");
     }
-        
+    
+    protected void encodeAriaRegion(FacesContext context, String clientId) throws IOException {
+        ResponseWriter writer = context.getResponseWriter();
+
+        writer.startElement("div", null);
+        writer.writeAttribute("id", clientId + "_ariaRegion", null);
+        writer.writeAttribute("class", "ui-helper-hidden-accessible", null);
+        writer.writeAttribute("role", "region", null);
+        writer.writeAttribute("aria-live", "polite", null);
+        writer.writeAttribute("aria-atomic", "true", null);
+        writer.endElement("div");
+    }
+    
     @Override
     public void encodeChildren(FacesContext context, UIComponent component) throws IOException {
         //Rendering happens on encodeEnd
